@@ -28,31 +28,37 @@ const computeShader = `
   
   varying vec2 vUv;
   
+  // Safe bell function with minimum sigma
   float bell(float x, float mu, float sigma) {
-    float d = (x - mu) / sigma;
+    float safeSigma = max(sigma, 0.001);
+    float d = (x - mu) / safeSigma;
     return exp(-d * d / 2.0);
   }
   
   float kernel(float r) {
     if (r >= 1.0) return 0.0;
+    float safeKernelSigma = max(uKernelSigma, 0.01);
     float sum = 0.0;
     for (int i = 0; i < 4; i++) {
       if (i >= uRingCount) break;
       float ringCenter = (float(i) + 0.5) / float(uRingCount);
-      sum += uBeta[i] * bell(r, ringCenter, uKernelSigma);
+      float d = (r - ringCenter) / safeKernelSigma;
+      sum += uBeta[i] * exp(-d * d / 2.0);
     }
     return sum;
   }
   
   float growth(float u) {
-    return 2.0 * bell(u, uMu, uSigma) - 1.0;
+    float safeSigma = max(uSigma, 0.001);
+    float d = (u - uMu) / safeSigma;
+    return 2.0 * exp(-d * d / 2.0) - 1.0;
   }
   
   void main() {
     vec2 pixel = 1.0 / uResolution;
     float kernelSum = 0.0;
     float valueSum = 0.0;
-    int radius = int(uR);
+    int radius = int(min(uR, 50.0));
     
     for (int dy = -50; dy <= 50; dy++) {
       if (abs(dy) > radius) continue;
@@ -60,16 +66,22 @@ const computeShader = `
         if (abs(dx) > radius) continue;
         float dist = length(vec2(float(dx), float(dy)));
         if (dist > uR) continue;
-        float r = dist / uR;
+        float r = dist / max(uR, 1.0);
         float k = kernel(r);
         vec2 sampleUv = fract(vUv + vec2(float(dx), float(dy)) * pixel);
-        valueSum += texture2D(uState, sampleUv).r * k;
-        kernelSum += k;
+        float sample = texture2D(uState, sampleUv).r;
+        // Skip NaN/Inf samples
+        if (sample >= 0.0 && sample <= 1.0) {
+          valueSum += sample * k;
+          kernelSum += k;
+        }
       }
     }
     
-    float u = kernelSum > 0.0 ? valueSum / kernelSum : 0.0;
+    float u = kernelSum > 0.001 ? valueSum / kernelSum : 0.0;
     float current = texture2D(uState, vUv).r;
+    // Protect against NaN in current state
+    if (!(current >= 0.0 && current <= 1.0)) current = 0.0;
     float newState = clamp(current + uDt * growth(u), 0.0, 1.0);
     gl_FragColor = vec4(newState, u, 0.0, 1.0);
   }
@@ -248,8 +260,8 @@ export function LeniaSimulation() {
       dt: { value: 0.1, min: 0.01, max: 0.5, step: 0.01, label: 'Time Step' },
     }),
     Kernel: folder({
-      R: { value: 13, min: 5, max: 30, step: 1, label: 'Radius' },
-      kernelSigma: { value: 0.15, min: 0.05, max: 0.3, step: 0.01, label: 'Peak Width' },
+      R: { value: 13, min: 5, max: 25, step: 1, label: 'Radius' },
+      kernelSigma: { value: 0.15, min: 0.08, max: 0.3, step: 0.01, label: 'Peak Width' },
       rings: { value: 1, min: 1, max: 4, step: 1, label: 'Ring Count' },
       beta1: { value: 1.0, min: 0, max: 1, step: 0.1, label: 'Ring 1' },
       beta2: { value: 0.0, min: 0, max: 1, step: 0.1, label: 'Ring 2' },
@@ -258,7 +270,7 @@ export function LeniaSimulation() {
     }, { collapsed: true }),
     Growth: folder({
       mu: { value: 0.15, min: 0.01, max: 0.5, step: 0.005, label: 'Center (μ)' },
-      sigma: { value: 0.015, min: 0.005, max: 0.1, step: 0.001, label: 'Width (σ)' },
+      sigma: { value: 0.015, min: 0.008, max: 0.1, step: 0.001, label: 'Width (σ)' },
     }),
     Display: folder({
       colorScheme: { value: 0, options: { Viridis: 0, Plasma: 1, Ocean: 2, Fire: 3, Bioluminescent: 4 }, label: 'Colors' },
