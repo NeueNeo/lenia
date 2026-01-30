@@ -69,10 +69,10 @@ const computeShader = `
         float r = dist / max(uR, 1.0);
         float k = kernel(r);
         vec2 sampleUv = fract(vUv + vec2(float(dx), float(dy)) * pixel);
-        float sample = texture2D(uState, sampleUv).r;
-        // Skip NaN/Inf samples
-        if (sample >= 0.0 && sample <= 1.0) {
-          valueSum += sample * k;
+        float texVal = texture2D(uState, sampleUv).r;
+        // Skip NaN/Inf values
+        if (texVal >= 0.0 && texVal <= 1.0) {
+          valueSum += texVal * k;
           kernelSum += k;
         }
       }
@@ -197,7 +197,11 @@ const renderShader = `
 
 const resolution = 512
 
-export function LeniaSimulation() {
+interface LeniaSimulationProps {
+  onSpeciesChange?: (name: string) => void
+}
+
+export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
   const { gl, size } = useThree()
   const meshRef = useRef<THREE.Mesh>(null)
   const [targets] = useState(() => {
@@ -353,15 +357,17 @@ export function LeniaSimulation() {
       beta1: spec.beta?.[0] ?? 1, beta2: spec.beta?.[1] ?? 0,
       beta3: spec.beta?.[2] ?? 0, beta4: spec.beta?.[3] ?? 0,
     })
+    onSpeciesChange?.(name)
     // Use random init - more stable than small preset patterns
     setTimeout(() => initField('random'), 50)
-  }, [setParams, initField])
+  }, [setParams, initField, onSpeciesChange])
 
   // Setup compute scene
   useEffect(() => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), computeMaterial)
     computeScene.add(quad)
     initField('random')
+    onSpeciesChange?.('Orbium') // Initial species
     return () => { targets.read.dispose(); targets.write.dispose() }
   }, [])
 
