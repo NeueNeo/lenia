@@ -306,8 +306,10 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
     // Scale density to species mu - creatures need neighborhood avg near mu to survive
     // Use spec mu if provided, otherwise use current tracked mu
     const mu = spec?.mu ?? currentMuRef.current
-    const baseVal = Math.min(mu * 3, 0.9) // Scale so avg is near mu
-    const variance = mu * 0.5
+    // Values should average to mu when convolved with kernel
+    // For a solid blob, this means cell values ~ mu * 1.2 to account for edge decay
+    const baseVal = Math.min(mu * 1.3 + 0.05, 0.95)
+    const variance = 0.15
     
     if (mode === 'seed') {
       // Small random blob
@@ -329,7 +331,8 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
           const x = ox + px, y = oy + py
           if (x >= 0 && x < resolution && y >= 0 && y < resolution) {
             // Scale pattern values: original 0-1 -> scaled for mu
-            data[(y * resolution + x) * 4] = p[py][px] * baseVal
+            // Pattern is 0-1, we want peak at baseVal
+            data[(y * resolution + x) * 4] = p[py][px] * baseVal * 1.5
           }
         }
       }
