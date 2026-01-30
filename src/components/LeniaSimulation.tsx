@@ -247,11 +247,30 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
     return opts
   }, [])
 
+  // Track current species for respawn
+  const currentSpeciesRef = useRef<string>('Orbium')
+
   const [params, setParams] = useControls(() => ({
     Simulation: folder({
       running: { value: true, label: 'Running' },
       speed: { value: 1, min: 1, max: 10, step: 1, label: 'Speed' },
       dt: { value: 0.1, min: 0.01, max: 0.5, step: 0.01, label: 'Time Step' },
+    }),
+    Species: folder({
+      preset: { 
+        value: 'Orbium', 
+        options: speciesOptions, 
+        label: 'Preset',
+        onChange: (v: string) => { loadSpecies(v) },
+      },
+      respawn: button(() => { 
+        const spec = species.find(s => s.name === currentSpeciesRef.current)
+        initField(spec?.pattern ? 'species' : 'random', spec) 
+      }),
+    }),
+    Growth: folder({
+      mu: { value: 0.15, min: 0.01, max: 0.5, step: 0.005, label: 'Center (μ)' },
+      sigma: { value: 0.015, min: 0.008, max: 0.1, step: 0.001, label: 'Width (σ)' },
     }),
     Kernel: folder({
       R: { value: 13, min: 5, max: 20, step: 1, label: 'Radius' },
@@ -262,27 +281,14 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
       beta3: { value: 0.0, min: 0, max: 1, step: 0.1, label: 'Ring 3' },
       beta4: { value: 0.0, min: 0, max: 1, step: 0.1, label: 'Ring 4' },
     }, { collapsed: true }),
-    Growth: folder({
-      mu: { value: 0.15, min: 0.01, max: 0.5, step: 0.005, label: 'Center (μ)' },
-      sigma: { value: 0.015, min: 0.008, max: 0.1, step: 0.001, label: 'Width (σ)' },
-    }),
     Display: folder({
       colorScheme: { value: 0, options: { Viridis: 0, Plasma: 1, Ocean: 2, Fire: 3, Bioluminescent: 4 }, label: 'Colors' },
       antialiasing: { value: 0, options: { Off: 0, '4x': 1, '9x': 2 }, label: 'Antialiasing' },
     }),
-    Species: folder({
-      preset: { 
-        value: 'Orbium', 
-        options: speciesOptions, 
-        label: 'Preset',
-        onChange: (v: string) => { loadSpecies(v) },
-      },
-    }),
     Actions: folder({
-      reset: button(() => { initField('random') }),
+      randomSeed: button(() => { initField('random') }),
       clear: button(() => { initField('clear') }),
-      seed: button(() => { initField('seed') }),
-    }),
+    }, { collapsed: true }),
   }))
 
   const initField = useCallback((mode: string, spec?: Species) => {
@@ -341,6 +347,7 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
   const loadSpecies = useCallback((name: string) => {
     const spec = species.find(s => s.name === name)
     if (!spec) return
+    currentSpeciesRef.current = name
     setParams({
       R: spec.R, mu: spec.mu, sigma: spec.sigma,
       kernelSigma: spec.kernelSigma || 0.15,
@@ -349,15 +356,17 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
       beta3: spec.beta?.[2] ?? 0, beta4: spec.beta?.[3] ?? 0,
     })
     onSpeciesChange?.(name)
-    // Use random init - more stable than small preset patterns
-    setTimeout(() => initField('random'), 50)
+    // Respawn with species pattern if available, else random
+    setTimeout(() => initField(spec.pattern ? 'species' : 'random', spec), 50)
   }, [setParams, initField, onSpeciesChange])
 
   // Setup compute scene
   useEffect(() => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), computeMaterial)
     computeScene.add(quad)
-    initField('random')
+    currentSpeciesRef.current = 'Orbium'
+    const spec = species.find(s => s.name === 'Orbium')
+    initField(spec?.pattern ? 'species' : 'random', spec)
     onSpeciesChange?.('Orbium') // Initial species
     return () => { targets.read.dispose(); targets.write.dispose() }
   }, [])
