@@ -249,6 +249,8 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
 
   // Track current species for respawn
   const currentSpeciesRef = useRef<string>('Orbium')
+  // Track current mu for spawning with tweaked params
+  const currentMuRef = useRef<number>(0.15)
 
   const [params, setParams] = useControls(() => ({
     Simulation: folder({
@@ -290,7 +292,10 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
       antialiasing: { value: 0, options: { Off: 0, '4x': 1, '9x': 2 }, label: 'Antialiasing' },
     }),
     Actions: folder({
-      randomSeed: button(() => { initField('random') }),
+      randomSeed: button(() => { 
+        // Use current mu (from slider), not species default
+        initField('random', undefined) 
+      }),
       clear: button(() => { initField('clear') }),
     }, { collapsed: true }),
   }))
@@ -298,33 +303,46 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
   const initField = useCallback((mode: string, spec?: Species) => {
     const data = new Float32Array(resolution * resolution * 4)
     const cx = resolution / 2, cy = resolution / 2
+    // Scale density to species mu - creatures need neighborhood avg near mu to survive
+    // Use spec mu if provided, otherwise use current tracked mu
+    const mu = spec?.mu ?? currentMuRef.current
+    const baseVal = Math.min(mu * 3, 0.9) // Scale so avg is near mu
+    const variance = mu * 0.5
     
     if (mode === 'seed') {
-      // Small random blob - same as reset but smaller
+      // Small random blob
       const r = 30
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
-          if (d < r) data[(y * resolution + x) * 4] = Math.random() * 0.5 + 0.25
+          if (d < r) {
+            data[(y * resolution + x) * 4] = baseVal + (Math.random() - 0.5) * variance
+          }
         }
       }
     } else if (mode === 'species' && spec?.pattern) {
+      // Use pattern but scale to appropriate mu
       const p = spec.pattern, h = p.length, w = p[0].length
       const ox = Math.floor((resolution - w) / 2), oy = Math.floor((resolution - h) / 2)
       for (let py = 0; py < h; py++) {
         for (let px = 0; px < w; px++) {
           const x = ox + px, y = oy + py
           if (x >= 0 && x < resolution && y >= 0 && y < resolution) {
-            data[(y * resolution + x) * 4] = p[py][px]
+            // Scale pattern values: original 0-1 -> scaled for mu
+            data[(y * resolution + x) * 4] = p[py][px] * baseVal
           }
         }
       }
     } else if (mode !== 'clear') {
+      // Random blob with mu-appropriate density
       const r = 60
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
-          if (d < r) data[(y * resolution + x) * 4] = Math.random() * 0.5 + 0.25
+          if (d < r) {
+            const falloff = 1 - (d / r) * 0.5 // Denser in center
+            data[(y * resolution + x) * 4] = (baseVal + (Math.random() - 0.5) * variance) * falloff
+          }
         }
       }
     }
@@ -377,6 +395,9 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
 
   useFrame((state) => {
     if (!isInitialized) return
+    
+    // Track current mu for respawn with tweaked params
+    currentMuRef.current = params.mu
     
     // Update compute uniforms
     computeMaterial.uniforms.uDt.value = params.dt
