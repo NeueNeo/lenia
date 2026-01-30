@@ -267,6 +267,10 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
         const spec = species.find(s => s.name === currentSpeciesRef.current)
         initField(spec?.pattern ? 'species' : 'random', spec) 
       }),
+      resetParams: button(() => { 
+        // Reload current species with default params
+        loadSpecies(currentSpeciesRef.current)
+      }),
     }),
     Growth: folder({
       mu: { value: 0.15, min: 0.01, max: 0.5, step: 0.005, label: 'Center (μ)' },
