@@ -28,29 +28,22 @@ const computeShader = `
   
   varying vec2 vUv;
   
-  // Safe bell function with minimum sigma
-  float bell(float x, float mu, float sigma) {
-    float safeSigma = max(sigma, 0.001);
-    float d = (x - mu) / safeSigma;
-    return exp(-d * d / 2.0);
-  }
-  
   float kernel(float r) {
     if (r >= 1.0) return 0.0;
-    float safeKernelSigma = max(uKernelSigma, 0.01);
+    float ks = max(uKernelSigma, 0.01);
     float sum = 0.0;
     for (int i = 0; i < 4; i++) {
       if (i >= uRingCount) break;
-      float ringCenter = (float(i) + 0.5) / float(uRingCount);
-      float d = (r - ringCenter) / safeKernelSigma;
+      float rc = (float(i) + 0.5) / float(uRingCount);
+      float d = (r - rc) / ks;
       sum += uBeta[i] * exp(-d * d / 2.0);
     }
     return sum;
   }
   
   float growth(float u) {
-    float safeSigma = max(uSigma, 0.001);
-    float d = (u - uMu) / safeSigma;
+    float s = max(uSigma, 0.001);
+    float d = (u - uMu) / s;
     return 2.0 * exp(-d * d / 2.0) - 1.0;
   }
   
@@ -58,30 +51,27 @@ const computeShader = `
     vec2 pixel = 1.0 / uResolution;
     float kernelSum = 0.0;
     float valueSum = 0.0;
-    int radius = int(min(uR, 50.0));
+    float R = min(uR, 20.0); // Cap at 20 for performance
+    int iR = int(R);
     
-    for (int dy = -50; dy <= 50; dy++) {
-      if (abs(dy) > radius) continue;
-      for (int dx = -50; dx <= 50; dx++) {
-        if (abs(dx) > radius) continue;
+    // Optimized loop with fixed bounds
+    for (int dy = -20; dy <= 20; dy++) {
+      if (abs(dy) > iR) continue;
+      for (int dx = -20; dx <= 20; dx++) {
+        if (abs(dx) > iR) continue;
         float dist = length(vec2(float(dx), float(dy)));
-        if (dist > uR) continue;
-        float r = dist / max(uR, 1.0);
+        if (dist > R) continue;
+        float r = dist / R;
         float k = kernel(r);
-        vec2 sampleUv = fract(vUv + vec2(float(dx), float(dy)) * pixel);
-        float texVal = texture2D(uState, sampleUv).r;
-        // Skip NaN/Inf values
-        if (texVal >= 0.0 && texVal <= 1.0) {
-          valueSum += texVal * k;
-          kernelSum += k;
-        }
+        vec2 uv = fract(vUv + vec2(float(dx), float(dy)) * pixel);
+        float v = texture2D(uState, uv).r;
+        valueSum += v * k;
+        kernelSum += k;
       }
     }
     
-    float u = kernelSum > 0.001 ? valueSum / kernelSum : 0.0;
+    float u = kernelSum > 0.0 ? valueSum / kernelSum : 0.0;
     float current = texture2D(uState, vUv).r;
-    // Protect against NaN in current state
-    if (!(current >= 0.0 && current <= 1.0)) current = 0.0;
     float newState = clamp(current + uDt * growth(u), 0.0, 1.0);
     gl_FragColor = vec4(newState, u, 0.0, 1.0);
   }
@@ -264,7 +254,7 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
       dt: { value: 0.1, min: 0.01, max: 0.5, step: 0.01, label: 'Time Step' },
     }),
     Kernel: folder({
-      R: { value: 13, min: 5, max: 25, step: 1, label: 'Radius' },
+      R: { value: 13, min: 5, max: 20, step: 1, label: 'Radius' },
       kernelSigma: { value: 0.15, min: 0.08, max: 0.3, step: 0.01, label: 'Peak Width' },
       rings: { value: 1, min: 1, max: 4, step: 1, label: 'Ring Count' },
       beta1: { value: 1.0, min: 0, max: 1, step: 0.1, label: 'Ring 1' },

@@ -255,7 +255,7 @@ export const species: Species[] = [
   // SmoothLife-like settings
   {
     name: 'SmoothLife',
-    R: 21,
+    R: 20,
     mu: 0.19,
     sigma: 0.033,
     kernelSigma: 0.15,
@@ -294,14 +294,14 @@ export const species: Species[] = [
   // Large, slow waves
   {
     name: 'Oceania',
-    R: 25,
+    R: 20,
     mu: 0.11,
     sigma: 0.012,
     kernelSigma: 0.18,
     beta: [1, 0.7, 0.4],
     pattern: generateRandomBlob(100),
     category: 'exotic',
-    description: `Oceania operates at the largest scale with R=25, producing vast, slow-moving wave patterns reminiscent of ocean currents or atmospheric systems. The three-ring kernel creates layered interference patterns. The low growth center (μ=0.11) means structures need broad support to survive — isolated peaks quickly dissolve back into the field.`,
+    description: `Oceania operates at large scale with R=20, producing vast, slow-moving wave patterns reminiscent of ocean currents or atmospheric systems. The three-ring kernel creates layered interference patterns. The low growth center (μ=0.11) means structures need broad support to survive — isolated peaks quickly dissolve back into the field.`,
   },
   
   // Custom: optimized for visual appeal
