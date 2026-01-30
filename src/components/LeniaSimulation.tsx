@@ -290,11 +290,16 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
     const cx = resolution / 2, cy = resolution / 2
     
     if (mode === 'seed') {
-      const r = 20
+      // Create a viable seed blob scaled to current parameters
+      const r = Math.max(50, params.R * 4)
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
-          if (d < r) data[(y * resolution + x) * 4] = Math.exp(-d*d/(r*r*0.3)) * 0.8
+          if (d < r) {
+            // Dense core with gradient edges + noise for variety
+            const core = d < r * 0.5 ? 0.85 : Math.exp(-((d - r*0.5)**2) / (r*r*0.15))
+            data[(y * resolution + x) * 4] = core * (0.7 + Math.random() * 0.3)
+          }
         }
       }
     } else if (mode === 'species' && spec?.pattern) {
