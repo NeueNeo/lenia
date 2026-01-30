@@ -222,8 +222,12 @@ export function LeniaSimulation() {
       colorScheme: { value: 0, options: { Viridis: 0, Plasma: 1, Ocean: 2, Fire: 3, Bioluminescent: 4 }, label: 'Colors' },
     }),
     Species: folder({
-      preset: { value: 'Orbium', options: speciesOptions, label: 'Preset' },
-      loadPreset: button((get) => { loadSpecies(get('Species.preset')) }),
+      preset: { 
+        value: 'Orbium', 
+        options: speciesOptions, 
+        label: 'Preset',
+        onChange: (v: string) => { loadSpecies(v) },
+      },
     }),
     Actions: folder({
       reset: button(() => { initField('random') }),
@@ -294,7 +298,8 @@ export function LeniaSimulation() {
       beta1: spec.beta?.[0] ?? 1, beta2: spec.beta?.[1] ?? 0,
       beta3: spec.beta?.[2] ?? 0, beta4: spec.beta?.[3] ?? 0,
     })
-    setTimeout(() => initField('species', spec), 50)
+    // Use random init - more stable than small preset patterns
+    setTimeout(() => initField('random'), 50)
   }, [setParams, initField])
 
   // Setup compute scene
