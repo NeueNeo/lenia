@@ -78,8 +78,10 @@ const computeShader = `
 const renderShader = `
   precision highp float;
   uniform sampler2D uState;
+  uniform vec2 uResolution;
   uniform int uColorScheme;
   uniform float uTime;
+  uniform float uAA; // 0 = off, 1+ = samples
   varying vec2 vUv;
   
   vec3 viridis(float t) {
@@ -128,14 +130,52 @@ const renderShader = `
     return t < 0.4 ? mix(dark, glowMod, t / 0.4) : mix(glowMod, bright, (t - 0.4) / 0.6);
   }
   
+  vec3 getColor(float state) {
+    if (uColorScheme == 0) return viridis(state);
+    else if (uColorScheme == 1) return plasma(state);
+    else if (uColorScheme == 2) return ocean(state);
+    else if (uColorScheme == 3) return fire(state);
+    else return bioluminescent(state);
+  }
+  
   void main() {
-    float state = texture2D(uState, vUv).r;
+    vec2 pixel = 1.0 / uResolution;
     vec3 color;
-    if (uColorScheme == 0) color = viridis(state);
-    else if (uColorScheme == 1) color = plasma(state);
-    else if (uColorScheme == 2) color = ocean(state);
-    else if (uColorScheme == 3) color = fire(state);
-    else color = bioluminescent(state);
+    
+    if (uAA < 0.5) {
+      // No AA - single sample
+      float state = texture2D(uState, vUv).r;
+      color = getColor(state);
+    } else if (uAA < 1.5) {
+      // 4x AA - rotated grid
+      vec2 offsets[4];
+      offsets[0] = vec2(-0.25, -0.75);
+      offsets[1] = vec2(0.75, -0.25);
+      offsets[2] = vec2(-0.75, 0.25);
+      offsets[3] = vec2(0.25, 0.75);
+      color = vec3(0.0);
+      for (int i = 0; i < 4; i++) {
+        float s = texture2D(uState, vUv + offsets[i] * pixel).r;
+        color += getColor(s);
+      }
+      color *= 0.25;
+    } else {
+      // 9x AA - 3x3 grid with gaussian weights
+      float weights[9];
+      weights[0] = 0.0625; weights[1] = 0.125; weights[2] = 0.0625;
+      weights[3] = 0.125;  weights[4] = 0.25;  weights[5] = 0.125;
+      weights[6] = 0.0625; weights[7] = 0.125; weights[8] = 0.0625;
+      color = vec3(0.0);
+      int idx = 0;
+      for (int dy = -1; dy <= 1; dy++) {
+        for (int dx = -1; dx <= 1; dx++) {
+          vec2 offset = vec2(float(dx), float(dy)) * pixel;
+          float s = texture2D(uState, vUv + offset).r;
+          color += getColor(s) * weights[idx];
+          idx++;
+        }
+      }
+    }
     
     vec2 uvc = vUv - 0.5;
     color *= 1.0 - dot(uvc, uvc) * 0.4;
@@ -184,8 +224,10 @@ export function LeniaSimulation() {
   const [renderMaterial] = useState(() => new THREE.ShaderMaterial({
     uniforms: {
       uState: { value: null },
+      uResolution: { value: new THREE.Vector2(resolution, resolution) },
       uColorScheme: { value: 0 },
       uTime: { value: 0 },
+      uAA: { value: 0 },
     },
     vertexShader,
     fragmentShader: renderShader,
@@ -220,6 +262,7 @@ export function LeniaSimulation() {
     }),
     Display: folder({
       colorScheme: { value: 0, options: { Viridis: 0, Plasma: 1, Ocean: 2, Fire: 3, Bioluminescent: 4 }, label: 'Colors' },
+      antialiasing: { value: 0, options: { Off: 0, '4x': 1, '9x': 2 }, label: 'Antialiasing' },
     }),
     Species: folder({
       preset: { 
@@ -340,6 +383,7 @@ export function LeniaSimulation() {
     renderMaterial.uniforms.uState.value = targets.read.texture
     renderMaterial.uniforms.uColorScheme.value = params.colorScheme
     renderMaterial.uniforms.uTime.value = state.clock.elapsedTime
+    renderMaterial.uniforms.uAA.value = params.antialiasing
   })
 
   const scale = useMemo(() => {
