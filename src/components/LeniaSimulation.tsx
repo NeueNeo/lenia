@@ -290,18 +290,12 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
     const cx = resolution / 2, cy = resolution / 2
     
     if (mode === 'seed') {
-      // Adaptive seed: density targets growth center μ
-      const r = Math.max(60, params.R * 5)
-      const targetDensity = Math.min(0.95, params.mu * 1.5 + 0.3) // Scale with μ
+      // Small random blob - same as reset but smaller
+      const r = 30
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
-          if (d < r) {
-            const t = d / r
-            // Smooth falloff from center
-            const base = (1 - t * t) * targetDensity
-            data[(y * resolution + x) * 4] = base * (0.8 + Math.random() * 0.2)
-          }
+          if (d < r) data[(y * resolution + x) * 4] = Math.random() * 0.5 + 0.25
         }
       }
     } else if (mode === 'species' && spec?.pattern) {
