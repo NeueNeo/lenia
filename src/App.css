@@ -1,0 +1,62 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.info {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.info h1 {
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.info p {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+}
+
+/* Leva panel customization */
+[data-leva-theme] {
+  --leva-colors-elevation1: rgba(10, 10, 15, 0.9) !important;
+  --leva-colors-elevation2: rgba(20, 20, 30, 0.9) !important;
+  --leva-colors-elevation3: rgba(30, 30, 45, 0.9) !important;
+  --leva-colors-accent1: #4af !important;
+  --leva-colors-accent2: #6cf !important;
+  --leva-colors-highlight1: rgba(80, 180, 255, 0.15) !important;
+  --leva-colors-highlight2: rgba(80, 180, 255, 0.25) !important;
+  --leva-fonts-mono: 'SF Mono', 'Menlo', 'Monaco', monospace !important;
+}
