@@ -338,15 +338,14 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
         }
       }
     } else if (mode !== 'clear') {
-      // Random blob centered on mu
-      const r = 60
+      // Solid blob centered on mu - no falloff
+      const r = 50
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
           if (d < r) {
-            const edge = 1 - Math.pow(d / r, 2) // Smooth falloff
-            const val = (baseVal + (Math.random() - 0.5) * variance) * edge
-            data[(y * resolution + x) * 4] = Math.max(0, Math.min(1, val))
+            const val = baseVal + (Math.random() - 0.5) * variance
+            data[(y * resolution + x) * 4] = Math.max(0.01, Math.min(1, val))
           }
         }
       }
