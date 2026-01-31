@@ -1,55 +1,50 @@
 # Lenia Project Status
 
-**Last updated:** 2026-01-30 ~21:10 CST
+**Last updated:** 2026-01-30 ~22:30 CST
 
-## Current State: BROKEN
+## Current State: COMPLETE ✅
 
-NeueBot made destructive changes without full context. Cursor Claude is fixing.
+All 13 species working. Clean UI shipped.
 
-## What Was Requested
+## Working Species
 
-Simplify the UI:
-- Species panel: dropdown to select preset + Respawn button
-- Display panel: color scheme selector
-- NO exposed Growth/Kernel parameter sliders (remove Leva complexity)
-- Keep InfoCard / right panel with species descriptions
+| Species | Category | Status |
+|---------|----------|--------|
+| Orbium | classic | ✅ |
+| Orbium bicaudatus | classic | ✅ |
+| Gyrorbium | classic | ✅ |
+| Scutium | classic | ✅ |
+| Helix | exotic | ✅ |
+| Hydrogeminium | exotic | ✅ |
+| Pentafolium | exotic | ✅ |
+| Paramecia | inspired | ✅ |
+| SmoothLife | inspired | ✅ |
+| Primordial Soup | chaotic | ✅ |
+| Microbia | exotic | ✅ |
+| Oceania | exotic | ✅ |
+| Luminara | exotic | ✅ |
 
-## What Got Broken
+## UI Components
 
-- App.tsx rewritten, removed Leva but added non-existent CSS classes
-- LeniaSimulation.tsx rewritten with different interface (forwardRef)
-- InfoCard component deleted from App.tsx (still exists in components/)
-- CSS classes referenced don't exist in App.css
-
-## Files Modified
-
-- `src/App.tsx` — needs fixing
-- `src/components/LeniaSimulation.tsx` — needs fixing or reverting
-- `src/components/InfoCard.tsx` — exists, just not imported
-
-## What Should Work
-
-The goal is simple controls without Leva:
-1. Species dropdown → loads preset params + pattern
-2. Respawn button → reinitializes field
-3. Color scheme dropdown → changes visualization
-4. Pause/Play button
-5. InfoCard showing species description
+- Species dropdown + Respawn button
+- Display dropdown (5 color schemes)
+- Pause/Play button  
+- Info card with species descriptions
 
 ## Technical Notes
 
-Lenia core math (working in previous version):
-- State update: A(t+Δt) = clamp(A(t) + Δt * G(K*A), 0, 1)
-- Kernel K: Gaussian rings with beta weights
-- Growth G(u) = 2 * exp(-(u-μ)² / 2σ²) - 1
+**Core equation:**
+```
+A(t+Δt) = clamp(A(t) + Δt * G(K*A), 0, 1)
+```
 
-Resolution: 512x512, ping-pong render targets for GPU compute.
+**Kernel:** Gaussian rings, R=radius, kernelSigma=width, beta=weights
 
-## Recovery Options
+**Growth:** G(u) = 2 * exp(-(u-μ)² / 2σ²) - 1
 
-1. `git checkout HEAD~1 -- src/` to revert to last working state
-2. Or fix the current broken files manually
+**Implementation:** 512x512 resolution, ping-pong WebGL render targets
 
-## Next Steps
+## Git History
 
-Wait for Cursor Claude to fix, then verify it works before adding complexity.
+- `681bba5` - Simplify UI: Species/Display panels, remove Leva complexity
+- Pushed to `NeueNeo/lenia`
