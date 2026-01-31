@@ -304,47 +304,49 @@ export function LeniaSimulation({ onSpeciesChange }: LeniaSimulationProps) {
     const data = new Float32Array(resolution * resolution * 4)
     const cx = resolution / 2, cy = resolution / 2
     // Scale density to species mu - creatures need neighborhood avg near mu to survive
-    // Use spec mu if provided, otherwise use current tracked mu
     const mu = spec?.mu ?? currentMuRef.current
-    // Values should average to mu when convolved with kernel
-    // For a solid blob, this means cell values ~ mu * 1.2 to account for edge decay
-    const baseVal = Math.min(mu * 1.3 + 0.05, 0.95)
-    const variance = 0.15
+    const sigma = spec?.sigma ?? 0.015
+    // For growth > 0, neighborhood avg must be near mu
+    // Just use mu as base with small variance
+    const baseVal = mu
+    const variance = sigma * 3 // Small variance around mu
     
     if (mode === 'seed') {
-      // Small random blob
+      // Small random blob centered on mu
       const r = 30
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
           if (d < r) {
-            data[(y * resolution + x) * 4] = baseVal + (Math.random() - 0.5) * variance
+            const val = baseVal + (Math.random() - 0.5) * variance
+            data[(y * resolution + x) * 4] = Math.max(0, Math.min(1, val))
           }
         }
       }
     } else if (mode === 'species' && spec?.pattern) {
-      // Use pattern but scale to appropriate mu
+      // Use pattern scaled so peak density = mu
       const p = spec.pattern, h = p.length, w = p[0].length
       const ox = Math.floor((resolution - w) / 2), oy = Math.floor((resolution - h) / 2)
       for (let py = 0; py < h; py++) {
         for (let px = 0; px < w; px++) {
           const x = ox + px, y = oy + py
           if (x >= 0 && x < resolution && y >= 0 && y < resolution) {
-            // Scale pattern values: original 0-1 -> scaled for mu
-            // Pattern is 0-1, we want peak at baseVal
-            data[(y * resolution + x) * 4] = p[py][px] * baseVal * 1.5
+            // Pattern values 0-1, scale so max is around mu+sigma*2
+            const val = p[py][px] * (baseVal + sigma * 2)
+            data[(y * resolution + x) * 4] = Math.max(0, Math.min(1, val))
           }
         }
       }
     } else if (mode !== 'clear') {
-      // Random blob with mu-appropriate density
+      // Random blob centered on mu
       const r = 60
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const d = Math.sqrt((x-cx)**2 + (y-cy)**2)
           if (d < r) {
-            const falloff = 1 - (d / r) * 0.5 // Denser in center
-            data[(y * resolution + x) * 4] = (baseVal + (Math.random() - 0.5) * variance) * falloff
+            const edge = 1 - Math.pow(d / r, 2) // Smooth falloff
+            const val = (baseVal + (Math.random() - 0.5) * variance) * edge
+            data[(y * resolution + x) * 4] = Math.max(0, Math.min(1, val))
           }
         }
       }
