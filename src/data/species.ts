@@ -153,7 +153,7 @@ export const species: Species[] = [
     name: 'Orbium',
     R: 13,
     mu: 0.15,
-    sigma: 0.015,
+    sigma: 0.02, // Slightly wider for easier initialization
     kernelSigma: 0.15,
     beta: [1],
     pattern: generateOrbiumPattern(64),
