@@ -166,7 +166,7 @@ export const species: Species[] = [
     name: 'Orbium bicaudatus',
     R: 13,
     mu: 0.156,
-    sigma: 0.016,
+    sigma: 0.020, // Widened for easier initialization
     kernelSigma: 0.15,
     beta: [1, 0.5],
     pattern: generateOrbiumPattern(64),
@@ -179,7 +179,7 @@ export const species: Species[] = [
     name: 'Gyrorbium',
     R: 13,
     mu: 0.14,
-    sigma: 0.014,
+    sigma: 0.018, // Widened for easier initialization
     kernelSigma: 0.15,
     beta: [1],
     pattern: generateGyrorbitumPattern(64),
@@ -244,7 +244,7 @@ export const species: Species[] = [
     name: 'Paramecia',
     R: 18,
     mu: 0.12,
-    sigma: 0.014,
+    sigma: 0.018, // Widened for easier initialization
     kernelSigma: 0.15,
     beta: [1],
     pattern: generateScutiumPattern(64),
@@ -282,8 +282,8 @@ export const species: Species[] = [
   {
     name: 'Microbia',
     R: 7,
-    mu: 0.22,
-    sigma: 0.018,
+    mu: 0.18, // Lowered for better stability
+    sigma: 0.022, // Widened for easier initialization
     kernelSigma: 0.12,
     beta: [1],
     pattern: generateOrbiumPattern(40),
@@ -296,7 +296,7 @@ export const species: Species[] = [
     name: 'Oceania',
     R: 20,
     mu: 0.11,
-    sigma: 0.012,
+    sigma: 0.018, // Widened for easier initialization
     kernelSigma: 0.18,
     beta: [1, 0.7, 0.4],
     pattern: generateRandomBlob(100),

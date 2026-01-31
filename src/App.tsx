@@ -1,9 +1,16 @@
 import { Canvas } from '@react-three/fiber'
-import { Leva } from 'leva'
-import { Suspense, useState, useCallback } from 'react'
-import { LeniaSimulation } from './components/LeniaSimulation'
-import { InfoCard } from './components/InfoCard'
+import { Suspense, useState, useCallback, useRef } from 'react'
+import { LeniaSimulation, type LeniaSimulationHandle } from './components/LeniaSimulation'
+import { species } from './data/species'
 import './App.css'
+
+const colorSchemes = [
+  { name: 'Viridis', value: 0 },
+  { name: 'Plasma', value: 1 },
+  { name: 'Ocean', value: 2 },
+  { name: 'Fire', value: 3 },
+  { name: 'Bioluminescent', value: 4 },
+]
 
 function StartOverlay({ onStart }: { onStart: () => void }) {
   return (
@@ -16,7 +23,6 @@ function StartOverlay({ onStart }: { onStart: () => void }) {
           <span className="play-icon">▶</span>
           Start Simulation
         </button>
-        <p className="hint">Adjust parameters in the panel to explore different species</p>
       </div>
     </div>
   )
@@ -25,15 +31,32 @@ function StartOverlay({ onStart }: { onStart: () => void }) {
 function App() {
   const [started, setStarted] = useState(false)
   const [currentSpecies, setCurrentSpecies] = useState('Orbium')
-  
-  const handleSpeciesChange = useCallback((name: string) => {
+  const [colorScheme, setColorScheme] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+  const simulationRef = useRef<LeniaSimulationHandle>(null)
+
+  const handleSpeciesChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const name = e.target.value
     setCurrentSpecies(name)
+    simulationRef.current?.loadSpecies(name)
   }, [])
+
+  const handleRespawn = useCallback(() => {
+    simulationRef.current?.respawn()
+  }, [])
+
+  const handleColorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setColorScheme(Number(e.target.value))
+  }, [])
+
+  const handlePauseToggle = useCallback(() => {
+    setIsPaused(p => !p)
+  }, [])
+
+  const currentSpeciesData = species.find(s => s.name === currentSpecies)
 
   return (
     <div className="app">
-      <Leva collapsed={false} oneLineLabels hidden={!started} />
-      
       {!started && <StartOverlay onStart={() => setStarted(true)} />}
       
       {started && (
@@ -49,13 +72,55 @@ function App() {
             dpr={1}
           >
             <Suspense fallback={null}>
-              <LeniaSimulation onSpeciesChange={handleSpeciesChange} />
+              <LeniaSimulation 
+                ref={simulationRef}
+                colorScheme={colorScheme}
+                isPaused={isPaused}
+              />
             </Suspense>
           </Canvas>
-          <InfoCard speciesName={currentSpecies} />
-          <div className="info">
-            <h1>Lenia</h1>
-            <p>Continuous Cellular Automata</p>
+
+          {/* Control Panel */}
+          <div className="control-panel">
+            <div className="panel-section">
+              <h3>Species</h3>
+              <select value={currentSpecies} onChange={handleSpeciesChange}>
+                {species.map(s => (
+                  <option key={s.name} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+              <button onClick={handleRespawn} className="respawn-btn">
+                ↻ Respawn
+              </button>
+            </div>
+
+            <div className="panel-section">
+              <h3>Display</h3>
+              <select value={colorScheme} onChange={handleColorChange}>
+                {colorSchemes.map(c => (
+                  <option key={c.value} value={c.value}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="panel-section">
+              <button onClick={handlePauseToggle} className="pause-btn">
+                {isPaused ? '▶ Play' : '⏸ Pause'}
+              </button>
+            </div>
+          </div>
+
+          {/* Species Info */}
+          {currentSpeciesData && (
+            <div className="species-info">
+              <h2>{currentSpeciesData.name}</h2>
+              <p className="category">{currentSpeciesData.category}</p>
+              <p className="description">{currentSpeciesData.description}</p>
+            </div>
+          )}
+
+          <div className="title">
+            <span className="title-text">lenia</span>
           </div>
         </>
       )}

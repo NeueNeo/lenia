@@ -125,14 +125,137 @@ canvas {
   opacity: 0.6;
 }
 
-/* Leva panel customization */
-[data-leva-theme] {
-  --leva-colors-elevation1: rgba(10, 10, 15, 0.9) !important;
-  --leva-colors-elevation2: rgba(20, 20, 30, 0.9) !important;
-  --leva-colors-elevation3: rgba(30, 30, 45, 0.9) !important;
-  --leva-colors-accent1: #4af !important;
-  --leva-colors-accent2: #6cf !important;
-  --leva-colors-highlight1: rgba(80, 180, 255, 0.15) !important;
-  --leva-colors-highlight2: rgba(80, 180, 255, 0.25) !important;
-  --leva-fonts-mono: 'SF Mono', 'Menlo', 'Monaco', monospace !important;
+/* Control Panel - right side */
+.control-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(10, 10, 15, 0.9);
+  border: 1px solid rgba(100, 180, 255, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 200px;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  color: rgba(255, 255, 255, 0.9);
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.panel-section {
+  margin-bottom: 16px;
+}
+
+.panel-section:last-child {
+  margin-bottom: 0;
+}
+
+.panel-section h3 {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(100, 180, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.panel-section select {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(30, 30, 45, 0.9);
+  border: 1px solid rgba(100, 180, 255, 0.3);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.panel-section select:hover {
+  border-color: rgba(100, 180, 255, 0.5);
+}
+
+.panel-section select:focus {
+  border-color: rgba(100, 180, 255, 0.7);
+}
+
+.respawn-btn,
+.pause-btn {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 8px;
+  background: linear-gradient(135deg, rgba(60, 140, 200, 0.3) 0%, rgba(40, 100, 160, 0.3) 100%);
+  border: 1px solid rgba(100, 180, 255, 0.4);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.respawn-btn:hover,
+.pause-btn:hover {
+  background: linear-gradient(135deg, rgba(80, 160, 220, 0.4) 0%, rgba(60, 120, 180, 0.4) 100%);
+  border-color: rgba(120, 200, 255, 0.6);
+}
+
+.pause-btn {
+  margin-top: 0;
+}
+
+/* Species Info - left side */
+.species-info {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  max-width: 320px;
+  background: rgba(10, 10, 15, 0.85);
+  border: 1px solid rgba(100, 180, 255, 0.15);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  color: rgba(255, 255, 255, 0.85);
+  z-index: 50;
+  backdrop-filter: blur(10px);
+}
+
+.species-info h2 {
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.species-info .category {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(100, 180, 255, 0.7);
+  margin-bottom: 12px;
+}
+
+.species-info .description {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Title - bottom left */
+.title {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 50;
+}
+
+.title-text {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 24px;
+  font-weight: 200;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
 }
